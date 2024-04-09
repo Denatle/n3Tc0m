@@ -2,6 +2,7 @@
 
 members = [
     "server",
+    "agent",
     "client"
 ]
 

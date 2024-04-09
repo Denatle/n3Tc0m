@@ -1,12 +1,12 @@
-use common::api;
+mod network;
+mod ui;
+
+use std::thread;
+
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
-    let client = reqwest::Client::new();
-    let body = api::DataString {
-        string: "".into()
-    };
-    client.post("0.0.0.0:3000").body(body).send().await?;
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    thread::spawn(|| { ui::render().unwrap() }).join().unwrap();
 
     Ok(())
 }
