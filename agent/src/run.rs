@@ -1,11 +1,9 @@
 use std::error::Error;
 use std::process::Output;
-use std::time::Duration;
 use reqwest::{Client, StatusCode};
 use tokio::process::Command;
 use common::api::{CommandResult, Job};
 
-const POLL_RATE: Duration = Duration::from_millis(500);
 
 pub(super) async fn run() -> Result<(), reqwest::Error> {
     let client = Client::new();
@@ -32,7 +30,6 @@ pub(super) async fn run() -> Result<(), reqwest::Error> {
 
 async fn poll(client: &Client) -> Result<Job, reqwest::Error> {
     let job = loop {
-        tokio::time::sleep(POLL_RATE).await;
         let response = client.get("http://0.0.0.0:3000/jobs").send().await;
         match response {
             Ok(..) => break response?,

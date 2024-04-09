@@ -9,13 +9,14 @@ use std::io::{self, stdout};
 pub(crate) fn render() -> Result<(), Box<dyn std::error::Error>> {
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
+    
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
-
     let mut should_quit = false;
     while !should_quit {
         terminal.draw(ui)?;
         should_quit = handle_events()?;
     }
+    
     disable_raw_mode()?;
     stdout().execute(LeaveAlternateScreen)?;
     Ok(())
