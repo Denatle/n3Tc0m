@@ -21,11 +21,7 @@ pub(super) async fn run(socket: WebSocketStream<MaybeTlsStream<TcpStream>>) -> R
                 err.to_string()
             }
         };
-        let code = send_output(&mut sender, output).await;
-        match code {
-            Ok(code) => println!("{:#?}", code),
-            Err(err) => println!("{:#?}", err)
-        }
+        send_output(&mut sender, output).await?;
     }
 }
 
@@ -66,20 +62,12 @@ async fn process_message(msg: Message) -> Result<String, Error> {
         Message::Text(t) => {
             Ok(t)
         }
-        Message::Binary(_) => {
-            Err(Error::Utf8)
-        }
         Message::Close(_) => {
             Err(Error::ConnectionClosed)
-        }
-        Message::Pong(_) => {
-            Err(Error::Utf8)
-        }
-        Message::Ping(_) => {
-            Err(Error::Utf8)
         }
         Message::Frame(_) => {
             unreachable!("This is never supposed to happen")
         }
+        _ => { Err(Error::Utf8) }
     }
 }

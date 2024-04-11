@@ -6,7 +6,6 @@ use crate::run::run;
 
 mod run;
 mod socket;
-mod errors;
 
 #[tokio::main]
 async fn main() -> Result<(), tokio_tungstenite::tungstenite::Error> {
@@ -14,14 +13,20 @@ async fn main() -> Result<(), tokio_tungstenite::tungstenite::Error> {
         let socket = match socket::spawn_client().await {
             Ok(socket) => { socket }
             Err(e) => {
-                println!("Error: {:#?}", e);
+                #[cfg(debug_assertions)]
+                println!("Socket didnt open, reconnecting\nError:\n{:#?}", e);
+                sleep(Duration::from_secs(1)).await;
                 continue;
             }
         };
         match run(socket).await {
-            Ok(_) => unreachable!("WTF"),
+            Ok(e) => {
+                #[cfg(debug_assertions)]
+                println!("Something went very wrong:\n{:#?}", e)
+            },
             Err(e) => {
-                println!("Socket closed with error, reconnecting\nError: {:#?}", e);
+                #[cfg(debug_assertions)]
+                println!("Socket closed with error, reconnecting\nError:\n{:#?}", e);
                 sleep(Duration::from_secs(1)).await;
                 continue;
             }

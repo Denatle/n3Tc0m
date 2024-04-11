@@ -19,12 +19,15 @@ pub(crate) async fn spawn_client() -> Result<WebSocketStream<MaybeTlsStream<TcpS
 async fn create_socket() -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, tokio_tungstenite::tungstenite::Error> {
     let ws_stream = match connect_async(WS_ENDPOINT).await {
         Ok((stream, response)) => {
-            println!("Handshake for client has been completed");
+            #[cfg(debug_assertions)]
+            println!("Handshake for cli_client has been completed");
+            #[cfg(debug_assertions)]
             println!("Server response was {response:?}");
             stream
         }
         Err(e) => {
-            println!("WebSocket handshake for client failed with {e}!");
+            #[cfg(debug_assertions)]
+            println!("WebSocket handshake for cli_client failed with {e}!");
             return Err(e);
         }
     };

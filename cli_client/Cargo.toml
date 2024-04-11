@@ -1,5 +1,5 @@
 [package]
-name = "client"
+name = "cli_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,9 @@ edition = "2021"
 common = { path = "../common" }
 reqwest = { version = "0.12.3", features = ["json"] }
 tokio = { version = "1.4.0", features = ["full"] }
-ratatui = "0.27.0-alpha.4"
 serde_json = "1.0.68"
-crossterm = "0.27.0"
 tokio-tungstenite = "0.21.0"
+
+# No ui for now
+#ratatui = "0.27.0-alpha.4"
+#crossterm = "0.27.0"

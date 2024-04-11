@@ -3,7 +3,7 @@
 members = [
     "server",
     "agent",
-    "client"
+    "cli_client"
 ]
 
 resolver = "2"
