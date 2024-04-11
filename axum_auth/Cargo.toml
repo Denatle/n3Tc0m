@@ -1,0 +1,23 @@
+[package]
+name = "axum-auth"
+description = "High-level http auth extractors for axum. Edited version"
+version = "0.7.0"
+repository = "https://github.com/owez/axum-auth"
+license = "MIT OR Apache-2.0"
+authors = ["Owen Griffiths <root@ogriffiths.com>", "Denatle"]
+edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+async-trait = "0.1.73"
+axum-core = "0.4"
+base64 = "0.22.0"
+http = "1"
+
+[dev-dependencies]
+axum = "0.7"
+reqwest = "0.12.3"
+tokio = { version = "1", features = ["full"] }

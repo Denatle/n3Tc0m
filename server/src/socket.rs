@@ -22,5 +22,5 @@ async fn handle_socket(socket: WebSocket, who: SocketAddr) {
         args: vec!["hello world".into()],
         command: "echo".into(),
     };
-    let _ = execute_job(who, job).await.unwrap();
+    let _ = execute_job(who, job).await;
 }

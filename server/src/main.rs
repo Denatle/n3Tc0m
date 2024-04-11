@@ -1,20 +1,23 @@
-#[macro_use] extern crate log;
-use std::net::SocketAddr;
+#[macro_use]
+extern crate log;
 
-use axum::{
-    Router, routing::get,
-};
+use std::net::SocketAddr;
+use axum::{Router, routing::get};
+use axum::routing::post;
 
 mod socket;
 mod employer;
-mod errors;
+mod http;
+
 const SERVER: &str = "0.0.0.0:3000";
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
     let app = Router::new()
-        .route("/ws", get(socket::handler));
+        .route("/ws", get(socket::handler))
+        .route("/client/cli/agents", get(http::agents))
+        .route("/client/cli/command", post(http::command));
 
     let listener = tokio::net::TcpListener::bind(SERVER).await.unwrap();
     info!("Started server");

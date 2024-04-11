@@ -7,7 +7,7 @@ use tokio::process::Command;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tokio_tungstenite::tungstenite::{Error, Message};
 
-use common::api::{CommandResult, Job};
+use common::api::{CommandOutput, CommandResult, Job};
 
 pub(super) async fn run(socket: WebSocketStream<MaybeTlsStream<TcpStream>>) -> Result<(), Error> {
     let (mut sender, mut receiver) = socket.split();
@@ -52,7 +52,7 @@ async fn execute(job: Job) -> Result<Output, tokio::io::Error> {
 }
 
 async fn send_output(sender: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, output: String) -> Result<(), Error> {
-    let result = CommandResult { output };
+    let result = CommandResult::CommandOutput(CommandOutput { output, });
     sender.send(Message::Text(serde_json::to_string(&result).unwrap())).await?;
     Ok(())
 }

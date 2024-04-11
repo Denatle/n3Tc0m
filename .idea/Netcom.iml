@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/server" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/agent/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/axum_auth/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cli_client/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
