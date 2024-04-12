@@ -3,9 +3,14 @@ name = "agent"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "executors"
+path = "src/executors/lib.rs"
+
 [dependencies]
 common = { path = "../common" }
 tokio = { version = "1.4.0", features = ["full"] }
 tokio-tungstenite = "0.21.0"
 futures-util = "0.3.30"
 serde_json = "1.0.115"
+lazy_static = "1.4.0"

@@ -2,10 +2,11 @@ use std::time::Duration;
 
 use tokio::time::sleep;
 
-use crate::run::run;
+use crate::employee::run;
 
-mod run;
+mod employee;
 mod socket;
+
 
 #[tokio::main]
 async fn main() -> Result<(), tokio_tungstenite::tungstenite::Error> {
@@ -23,7 +24,7 @@ async fn main() -> Result<(), tokio_tungstenite::tungstenite::Error> {
             Ok(e) => {
                 #[cfg(debug_assertions)]
                 println!("Something went very wrong:\n{:#?}", e)
-            },
+            }
             Err(e) => {
                 #[cfg(debug_assertions)]
                 println!("Socket closed with error, reconnecting\nError:\n{:#?}", e);

@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
-pub enum CommandErrors {
+pub enum JobErrors {
+    SocketNotFound,
     ConnectionClosed,
     TypeNotSupported,
     NoMessage,
-    BadMessage
+    BadAgentMessage,
+    TimeOut
 }

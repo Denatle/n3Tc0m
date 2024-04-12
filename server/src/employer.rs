@@ -4,18 +4,23 @@ use std::net::SocketAddr;
 use axum::extract::ws::{Message, WebSocket};
 use futures::StreamExt;
 use lazy_static::lazy_static;
+use serde_json::from_str;
 use tokio::sync::{Mutex, MutexGuard, RwLock};
 
-use common::api::{CommandOutput, CommandResult, Job};
-use common::errors::CommandErrors;
-use common::errors::CommandErrors::*;
+use common::api::{Job, JobResult, TargetJob};
+use common::errors::JobErrors;
+use common::errors::JobErrors::*;
+
+type Agents = HashMap<SocketAddr, (Mutex<WebSocket>, RwLock<HashMap<u16, Job>>)>;
 
 lazy_static! {
-    static ref AGENTS: RwLock<HashMap<SocketAddr, Mutex<WebSocket>>> = RwLock::new(HashMap::new());
+    static ref AGENTS: RwLock<Agents> = RwLock::new(HashMap::new());
 }
 
+// TODO: Job ids and cancelling
+
 pub async fn employ(socket_addr: SocketAddr, web_socket: WebSocket) {
-    AGENTS.write().await.insert(socket_addr, Mutex::from(web_socket));
+    AGENTS.write().await.insert(socket_addr, (Mutex::from(web_socket), RwLock::new(HashMap::new())));
     info!("Employed {socket_addr}")
 }
 
@@ -25,28 +30,16 @@ pub async fn get_agents() -> Vec<SocketAddr> {
     agents_read.keys().cloned().collect()
 }
 
-pub async fn execute_job(socket_addr: SocketAddr, job: Job) -> CommandResult {
-    info!("Executing job ({:?}) on {socket_addr}", job);
-    let message_text = match execute(socket_addr, job).await {
-        CommandResult::CommandOutput(o) => { o.output }
-        CommandResult::CommandError(e) => {
-            return match e {
-                ConnectionClosed => {
-                    fire(socket_addr).await;
-                    CommandResult::CommandError(ConnectionClosed)
-                }
-                e => { CommandResult::CommandError(e) }
-            };
-        }
+pub async fn execute_job(socket_addr: SocketAddr, target_job: TargetJob) -> JobResult {
+    info!("Executing job ({:?}) on {socket_addr}", target_job);
+    let job = Job {
+        job_type: target_job.job_type,
+        id: 0,
+        timeout: target_job.timeout,
     };
+    let result = execute(socket_addr, job).await;
 
-    let result: CommandResult = match serde_json::from_str::<CommandResult>(&message_text) {
-        Ok(r) => { r }
-        Err(_) => { return CommandResult::CommandError(BadMessage); }
-    };
-
-
-    info!("Job ({socket_addr}) resulted in {:?}", result);
+    info!("Job ({socket_addr}, {}) resulted in {:?}", result.id, serde_json::to_string(&result.job_output).unwrap());
     result
 }
 
@@ -57,25 +50,25 @@ async fn fire(socket_addr: SocketAddr) {
     info!("Fired {socket_addr}");
 }
 
-async fn execute(socket_addr: SocketAddr, job: Job) -> CommandResult {
+async fn execute(socket_addr: SocketAddr, job: Job) -> JobResult {
     let agents_read = AGENTS
         .read().await;
     let socket = match agents_read
         .get(&socket_addr) {
-        Some(r) => {r.lock().await},
+        Some(r) => { r.0.lock().await }
         None => {
             drop(agents_read);
             fire(socket_addr).await;
-            info!("returned");
-            return CommandResult::CommandError(ConnectionClosed)
-        },
+            return JobResult { id: job.id, job_output: Err(SocketNotFound) };
+        }
     };
-        
-    let message = match send_job(socket, job).await {
+
+    let message = match send_job(socket, &job).await {
         Some(m) => { m }
         None => {
+            drop(agents_read);
             fire(socket_addr).await;
-            return CommandResult::CommandError(NoMessage);
+            return JobResult { id: job.id, job_output: Err(NoMessage) };
         }
     };
     let message_text = match process_message(message).await {
@@ -83,25 +76,28 @@ async fn execute(socket_addr: SocketAddr, job: Job) -> CommandResult {
         Err(e) => {
             return match e {
                 ConnectionClosed => {
+                    drop(agents_read);
                     fire(socket_addr).await;
-                    CommandResult::CommandError(ConnectionClosed)
+                    JobResult { id: job.id, job_output: Err(ConnectionClosed) }
                 }
-                e => { CommandResult::CommandError(e) }
+                e => { JobResult { id: job.id, job_output: Err(e) } }
             };
         }
     };
-    CommandResult::CommandOutput(CommandOutput {
-        output: message_text
-    })
+
+    match from_str::<JobResult>(&message_text) {
+        Ok(r) => { r }
+        Err(_) => { JobResult { id: job.id, job_output: Err(BadAgentMessage) } }
+    }
 }
 
-async fn send_job(mut socket: MutexGuard<'_, WebSocket>, job: Job) -> Option<Message> {
+async fn send_job(mut socket: MutexGuard<'_, WebSocket>, job: &Job) -> Option<Message> {
     if socket
-        .send(Message::Text(serde_json::to_string(&job).unwrap()))
+        .send(Message::Text(serde_json::to_string(job).unwrap()))
         .await
         .is_err()
     {
-        warn!("Client abruptly disconnected");
+        warn!("Agent abruptly disconnected");
         return None;
     }
 
@@ -109,7 +105,7 @@ async fn send_job(mut socket: MutexGuard<'_, WebSocket>, job: Job) -> Option<Mes
     Some(result)
 }
 
-async fn process_message(message: Message) -> Result<String, CommandErrors> {
+async fn process_message(message: Message) -> Result<String, JobErrors> {
     match message {
         Message::Text(m) => { Ok(m) }
         Message::Close(_) => { Err(ConnectionClosed) }
