@@ -18,11 +18,14 @@ pub(crate) async fn spawn_client() -> Result<WebSocketStream<MaybeTlsStream<TcpS
 
 async fn create_socket() -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, tokio_tungstenite::tungstenite::Error> {
     let ws_stream = match connect_async(WS_ENDPOINT).await {
+        #[cfg(debug_assertions)]
         Ok((stream, response)) => {
-            #[cfg(debug_assertions)]
             println!("Handshake for cli_client has been completed");
-            #[cfg(debug_assertions)]
             println!("Server response was {response:?}");
+            stream
+        }
+        #[cfg(not(debug_assertions))]
+        Ok((stream, _response)) => {
             stream
         }
         Err(e) => {

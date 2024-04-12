@@ -6,7 +6,6 @@ use futures_util::{
     stream::{SplitSink, SplitStream},
     StreamExt,
 };
-use lazy_static::lazy_static;
 use tokio::{
     net::TcpStream,
     sync::RwLock,
@@ -33,18 +32,15 @@ type Handle = JoinHandle<()>;
 type MutexSender = Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>;
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
-lazy_static! {
-    static ref JOBS: RwLock<HashMap<u16, Handle>> = RwLock::new( HashMap::new());
-}
-
 pub(super) async fn run(socket: WebSocketStream<MaybeTlsStream<TcpStream>>) -> Result<(), TungstenError> {
+    let jobs: RwLock<HashMap<u16, Handle>> = RwLock::new(HashMap::new());
     let (sender, mut receiver) = socket.split();
     let mutex = Arc::new(Mutex::new(sender));
     loop {
         let job = receive(&mut receiver).await?;
         let job_id = job.id;
         let thread = tokio::spawn(execute_timeout(job, mutex.clone()));
-        JOBS.write().await.insert(job_id, thread);
+        jobs.write().await.insert(job_id, thread);
     }
 }
 
@@ -116,7 +112,7 @@ async fn execute_timeout(job: Job, mut sender: MutexSender) {
     match timeout(job.timeout, execute(sender.clone(), job)).await {
         Ok(e) => {
             match e {
-                Ok(_) => { println!("nice") }
+                Ok(_) => { }
                 Err(e) => { println!("{:#?}", e) }
             }
         }
