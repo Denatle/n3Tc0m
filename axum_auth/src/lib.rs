@@ -25,7 +25,7 @@ use http::{header::AUTHORIZATION, request::Parts, StatusCode};
 pub type Rejection = (StatusCode, &'static str);
 
 /// Default error status code used for the basic extractors
-pub(crate) const ERR_DEFAULT: StatusCode = StatusCode::BAD_REQUEST;
+pub(crate) const ERR_DEFAULT: StatusCode = StatusCode::NOT_FOUND;
 
 /// The header is completely missing
 pub(crate) const ERR_MISSING: &str = "";
