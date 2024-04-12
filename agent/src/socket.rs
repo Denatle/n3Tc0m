@@ -2,7 +2,7 @@ use futures_util::StreamExt;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
-const WS_ENDPOINT: &str = "ws://0.0.0.0:3000/ws";
+const WS_ENDPOINT: &str = "ws://localhost:3000/ws";
 
 
 pub(crate) async fn spawn_client() -> Result<WebSocketStream<MaybeTlsStream<TcpStream>>, tokio_tungstenite::tungstenite::Error> {
