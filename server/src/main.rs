@@ -11,7 +11,7 @@ mod socket;
 mod employer;
 mod http;
 
-const SERVER: &str = "0.0.0.0:3000";
+const SERVER: &str = "localhost:3000";
 
 #[tokio::main]
 async fn main() {
