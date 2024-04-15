@@ -6,6 +6,7 @@ use crate::employee::run;
 
 mod employee;
 mod socket;
+mod manager;
 
 
 #[tokio::main]

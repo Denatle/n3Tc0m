@@ -11,7 +11,7 @@ mod socket;
 mod employer;
 mod http;
 
-const SERVER: &str = "localhost:3000";
+const SERVER: &str = "localhost:45000";
 
 #[tokio::main]
 async fn main() {
@@ -31,6 +31,6 @@ async fn main() {
     // }).unwrap());
 
     let listener = tokio::net::TcpListener::bind(SERVER).await.unwrap();
-    info!("Started server");
+    info!("Started server on {}", listener.local_addr().unwrap());
     axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
 }

